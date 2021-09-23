@@ -4,7 +4,7 @@ const path = require('path');
 const fs = require('fs/promises');
 // const uuid = require('./helpers/uuid');
 const app = express();
-const PORT = process.env || 3333;
+const PORT = process.env.PORT || 3333;
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
