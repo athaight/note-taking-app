@@ -1,69 +1,47 @@
+console.clear();
 const express = require('express');
 const path = require('path');
-const fs = require('fs');
-const uuid = require('./helpers/uuid');
-
-const PORT = 3001;
-
+const fs = require('fs/promises');
+// const uuid = require('./helpers/uuid');
 const app = express();
+const PORT = process.env || 3333;
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
 app.use(express.static('public'));
 
+
 app.get('/', (req, res) =>
-  res.sendFile(path.join(__dirname, '/public/index.html'))
+res.sendFile(path.join(__dirname, '/public/index.html'))
+);
+app.get("/notes", (req, res) =>
+  res.sendFile(path.join(__dirname, "/public/notes.html"))
+);
+
+app.get("/api/notes", (req, res) =>
+  res.sendFile(path.join(__dirname, "/db/db.json"))
 );
 
 app.get('/api/notes', (req, res) => {
-
-  res.status(200).json(`${req.method} request received to get notes`);
-
-
-  console.info(`${req.method} request received to get notes`);
+  res.status(200).json(`${req.method} request received to get reviews`);
 });
 
-app.post('/api/notes', (req, res) => {
+app.post('/api/notes', async (req, res) => {
   console.info(`${req.method} request received to add a note`);
   const {title, text} = req.body;
+  const dataToRead = await fs.readFile("./db/db.json", "utf8");
 
-  if (title && text) {
-    const newNote = {
-      title,
-      text,
-      note_id: uuid(),
-    };
+  const parsedData = JSON.parse(dataToRead);
 
-    fs.readFile('./db/notes.json', 'utf8', (err, data) => {
-      if (err) {
-        console.error(err);
-      } else {
-        const parsedNotes = JSON.parse(data);
-        parsedNotes.push(newNote);
+  parsedData.push(req.body);
 
-        fs.writeFile(
-          './db/notes.json',
-          JSON.stringify(parsedNotes, null, 4),
-          (writeErr) =>
-            writeErr
-              ? console.error(writeErr)
-              : console.info('Successfully updated notes!')
-        );
-      }
-    });
+  const stringifiedData = JSON.stringify(parsedData);
 
-    const response = {
-      status: 'success',
-      body: newNote,
-    };
-
-    console.log(response);
-    res.status(201).json(response);
-  } else {
-    res.status(500).json('Error in posting note');
-  }
+  await fs.writeFile("./db/db.json", stringifiedData);
+  res.send("whatever");
 });
+
+
 
 app.listen(PORT, () =>
   console.log(`App listening at http://localhost:${PORT} 🚀`)
